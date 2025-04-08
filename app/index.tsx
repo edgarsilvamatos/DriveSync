@@ -115,6 +115,8 @@ export default function Login() {
             >
               <Text style={styles.buttonText}>Upload photo to Drive</Text>
             </TouchableOpacity>
+            <Text>*Upload notifications are not visible in emulator, but they work on real devices.
+            </Text>
           </>
         ) : (
           <>
