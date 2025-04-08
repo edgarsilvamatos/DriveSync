@@ -7,9 +7,8 @@ import {
   User,
 } from "@react-native-google-signin/google-signin";
 import { useEffect, useState } from "react";
-import { StyleSheet, Button, View, Alert, Text } from "react-native";
+import { StyleSheet, Button, View, Alert, Text, TouchableOpacity } from "react-native";
 import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
 import { FlatList } from 'react-native';
 import { fetchDriveFiles, postDriveFile } from '@/components/Method'; 
 
@@ -85,27 +84,42 @@ export default function Login() {
   };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}>
+    <ParallaxScrollView>
       <View style={styles.container}>
         {user ? (
           <>
             <Text style={styles.greeting}>👋 Welcome, {user.user.name}</Text>
-            <Button title="Sign out" onPress={signOut} />
+            <TouchableOpacity style={styles.button} onPress={signOut}>
+              <Text style={styles.buttonText}>Sign out</Text>
+            </TouchableOpacity>
+
             <Text style={styles.subHeader}>📂 Your Drive Files:</Text>
-            <FlatList
-              scrollEnabled={false}
-              data={driveFiles}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.fileList}
-              renderItem={({ item }) => (
-                <Text style={styles.fileItem}>• {item.name}</Text>
-              )}
-            />
-            <Button title="Upload photo to Drive" onPress={() => postDriveFile(accessToken!, fetchDriveFiles, setDriveFiles)} />
+            <View style={styles.fileContainer}>
+              <FlatList
+                scrollEnabled={false}
+                data={driveFiles}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.fileList}
+                renderItem={({ item }) => (
+                  <Text style={styles.fileItem}>• {item.name}</Text>
+                )}
+              />
+            </View>
+            <TouchableOpacity
+              style={styles.uploadButton}
+              onPress={() => postDriveFile(accessToken!, fetchDriveFiles, setDriveFiles)}
+            >
+              <Text style={styles.buttonText}>Upload photo to Drive</Text>
+            </TouchableOpacity>
           </>
         ) : (
-          <Button title="Sign in with Google" onPress={signIn} />
+          <>
+            <Text style={styles.welcomeText}>Welcome to DriveSync</Text>
+            <Text style={styles.loginPrompt}>Please log in to your Google account</Text>
+            <TouchableOpacity style={styles.button} onPress={signIn}>
+              <Text style={styles.buttonText}>Sign in with Google</Text>
+            </TouchableOpacity>
+          </>
         )}
       </View>
     </ParallaxScrollView>
@@ -113,36 +127,59 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
   container: {
+    flex: 1,
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#f8f9fa',
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 12,
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 20,
     textAlign: 'center',
   },
   subHeader: {
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: '600',
+    color: '#333',
     marginTop: 20,
     marginBottom: 10,
   },
-  fileList: {
+  button: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginVertical: 10,
+  },
+  uploadButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginVertical: 10,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  fileContainer: {
     width: '100%',
     paddingHorizontal: 10,
+    marginBottom: 20,
+  },
+  fileList: {
+    paddingVertical: 10,
   },
   fileItem: {
     fontSize: 16,
-    paddingVertical: 4,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#ddd',
+    color: '#333',
   },
 });
