@@ -11,6 +11,8 @@ import { StyleSheet, Button, View, Alert, Text, TouchableOpacity } from "react-n
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { FlatList } from 'react-native';
 import { fetchDriveFiles, postDriveFile } from '@/components/Method'; 
+import { useUploadRetry } from '@/components/UseUploadReload';
+import { triggerBannerNotification } from '@/components/Notifications';
 
 export default function Login() {
   const [user, setUser] = useState<User | null>(null);
@@ -32,7 +34,7 @@ export default function Login() {
           setUser(res.data);
           const tokens = await GoogleSignin.getTokens();
           setAccessToken(tokens.accessToken);
-          fetchDriveFiles(tokens.accessToken, setDriveFiles); // <-- Fetch files when signed in
+          fetchDriveFiles(tokens.accessToken, setDriveFiles);
         }
       })
       .catch(() => {});
@@ -42,7 +44,7 @@ export default function Login() {
     let interval: NodeJS.Timer;
 
     if (accessToken) {
-      fetchDriveFiles(accessToken, setDriveFiles); // initial fetch
+      fetchDriveFiles(accessToken, setDriveFiles); 
       interval = setInterval(() => {
         fetchDriveFiles(accessToken, setDriveFiles);
       }, 10000); // every 10s
@@ -53,6 +55,8 @@ export default function Login() {
     };
   }, [accessToken]);
 
+  useUploadRetry(accessToken, fetchDriveFiles, setDriveFiles, triggerBannerNotification);
+
   const signIn = async () => {
     try {
       await GoogleSignin.hasPlayServices();
@@ -61,7 +65,7 @@ export default function Login() {
         setUser(res.data);
         const tokens = await GoogleSignin.getTokens();
         setAccessToken(tokens.accessToken);
-        fetchDriveFiles(tokens.accessToken, setDriveFiles); // <-- Fetch files after signing in
+        fetchDriveFiles(tokens.accessToken, setDriveFiles); 
       } else if (res.type === "cancelled") {
         Alert.alert("Login cancelled");
       }
@@ -138,6 +142,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#333',
     marginBottom: 20,
+    textAlign: 'center',
+  },
+  welcomeText: {
+    fontSize: 30,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  loginPrompt: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#777',
+    marginBottom: 30,
     textAlign: 'center',
   },
   subHeader: {

@@ -1,8 +1,14 @@
 import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
+import { triggerBannerNotification } from './Notifications';
 import { Alert } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
+import { queueOfflineUpload } from './OfflineQueue';
 
-export const fetchDriveFiles = async (token: string, setDriveFiles: (files: any[]) => void) => {
+export const fetchDriveFiles = async (
+  token: string,
+  setDriveFiles: (files: any[]) => void
+) => {
   try {
     const res = await fetch(
       'https://www.googleapis.com/drive/v3/files?q=trashed=false&orderBy=modifiedTime desc&pageSize=100&fields=files(id,name)',
@@ -19,7 +25,6 @@ export const fetchDriveFiles = async (token: string, setDriveFiles: (files: any[
     setDriveFiles(json.files || []);
   } catch (err) {
     console.error('Drive fetch failed', err);
-    Alert.alert('Failed to fetch Drive files');
   }
 };
 
@@ -40,6 +45,14 @@ export const postDriveFile = async (
     const fileUri = file.uri;
     const fileName = file.name;
     const mimeType = file.mimeType || 'application/octet-stream';
+
+    const isConnected = (await NetInfo.fetch()).isConnected;
+
+    if (!isConnected) {
+      await queueOfflineUpload({ uri: fileUri, name: fileName, mimeType });
+      triggerBannerNotification('Offline Upload', 'File queued for later upload.');
+      return;
+    }
 
     const fileData = await FileSystem.readAsStringAsync(fileUri, {
       encoding: FileSystem.EncodingType.Base64,
@@ -82,8 +95,9 @@ export const postDriveFile = async (
     );
 
     if (res.ok) {
-      Alert.alert('Success', 'File uploaded to Drive');
-      fetchDriveFiles(accessToken, setDriveFiles); // refresh file list
+      triggerBannerNotification('Upload Complete', 'Your file was uploaded to Drive.');
+      fetchDriveFiles(accessToken, setDriveFiles);
+      Alert.alert('Upload complete', 'Your file was uploaded to Drive.');
     } else {
       const err = await res.text();
       Alert.alert('Upload failed', err);
